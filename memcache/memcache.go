@@ -354,35 +354,40 @@ func (c *Client) withKeyAddr(key string, fn func(net.Addr) error) (err error) {
 	return fn(addr)
 }
 
-//IsCacheEmpty returns whether a cache is empty (true) or not (false) based on the number of items stored, 0 == empty.
-func (c *Client) IsCacheEmpty(addr net.Addr) (bool, error) {
-	cn, err := c.getConn(addr)
-	if err != nil {
-		return false, err
-	}
-	response := make([]byte, 2000)
-	stats := []byte("stats\n")
-	_, err = cn.nc.Write(stats)
-	if err != nil {
-		return false, err
-	}
-	_, err = cn.nc.Read(response)
-	if err != nil {
-		return false, err
-	}
-	parsedResponse := strings.Split(string(response), "\n")
-	if !strings.Contains(parsedResponse[64], "total_items") {
-		return false, errors.New("Couldn't get total_items from memcache stats")
-	}
-	nItemsString := strings.SplitAfter(parsedResponse[64], "STAT total_items ")
-	nItemsInt, err := strconv.Atoi(strings.TrimSpace(nItemsString[1]))
-	if err != nil {
-		return false, err
-	}
-	if nItemsInt == 0 {
-		return true, nil
-	}
+//IsACacheEmpty returns whether a cache is empty (true) or not (false) based on the number of items stored, 0 == empty.
+func (c *Client) IsACacheEmpty() (bool, error) {
+	addr := c.selector.ReturnAddresses()
+	for _, ip := range addr {
 
+		cn, err := c.getConn(ip)
+
+		if err != nil {
+			return false, err
+		}
+		response := make([]byte, 2048)
+		stats := []byte("stats\n")
+		_, err = cn.nc.Write(stats)
+		if err != nil {
+			return false, err
+		}
+		_, err = cn.nc.Read(response)
+		if err != nil {
+			return false, err
+		}
+		parsedResponse := strings.Split(string(response), "\n")
+		if !strings.Contains(parsedResponse[64], "total_items") {
+			return false, errors.New("Couldn't get total_items from memcache stats")
+		}
+		nItemsString := strings.SplitAfter(parsedResponse[64], "STAT total_items ")
+		nItemsInt, err := strconv.Atoi(strings.TrimSpace(nItemsString[1]))
+		if err != nil {
+			return false, err
+		}
+		if nItemsInt == 0 {
+			return true, nil
+		}
+
+	}
 	return false, nil
 }
 

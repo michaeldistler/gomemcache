@@ -113,3 +113,7 @@ func (ss *ServerList) PickServer(key string) (net.Addr, error) {
 	}
 	return nil, fmt.Errorf("No servers found.")
 }
+
+func (ss *ServerList) ReturnAddresses() []net.Addr {
+	return ss.addrs
+}
