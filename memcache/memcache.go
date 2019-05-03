@@ -128,10 +128,6 @@ func New(algorithm string, server ...string) *Client {
 	} else {
 		ss = new(defaultselector.ServerList)
 	}
-	//default port added
-	for i, s := range server {
-		server[i] = fmt.Sprint(s, ":11211")
-	}
 	ss.SetServers(server...)
 	return NewFromSelector(ss)
 }
@@ -368,7 +364,7 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		response := make([]byte, 2000)
+		response := make([]byte, 2048)
 		stats := []byte("stats\n")
 		_, err = cn.nc.Write(stats)
 		if err != nil {
