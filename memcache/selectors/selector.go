@@ -31,4 +31,5 @@ type ServerSelector interface {
 	// should be shared onto.
 	PickServer(key string) (net.Addr, error)
 	Each(func(net.Addr) error) error
+	ReturnAddresses() []net.Addr
 }

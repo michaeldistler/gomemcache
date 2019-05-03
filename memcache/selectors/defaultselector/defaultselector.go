@@ -81,6 +81,10 @@ func (ss *ServerList) SetServers(servers ...string) error {
 	return nil
 }
 
+func (ss *ServerList) ReturnAddresses() []net.Addr {
+	return ss.addrs
+}
+
 // Each iterates over each server calling the given function
 func (ss *ServerList) Each(f func(net.Addr) error) error {
 	ss.mu.RLock()
