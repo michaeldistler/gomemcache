@@ -356,6 +356,7 @@ func (c *Client) withKeyAddr(key string, fn func(net.Addr) error) (err error) {
 
 //IsACacheEmpty returns whether a cache is empty (true) or not (false) based on the number of items stored, 0 == empty.
 func (c *Client) IsACacheEmpty() (bool, error) {
+	fmt.Println("ivan")
 	addr := c.selector.ReturnAddresses()
 	for _, ip := range addr {
 
@@ -373,6 +374,9 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 		_, err = cn.nc.Read(response)
 		if err != nil {
 			return false, err
+		}
+		if response == nil {
+			return false, errors.New(fmt.Sprint("Couldn't get a response from the memcache IP: ", ip.String()))
 		}
 		parsedResponse := strings.Split(string(response), "\n")
 		if !strings.Contains(parsedResponse[64], "total_items") {
