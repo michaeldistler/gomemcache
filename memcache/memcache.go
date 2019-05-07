@@ -385,11 +385,11 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 			}
 			break
 		}
-		nItemsString := strings.SplitAfter(parsedResponse[64], "STAT total_items ")
+		nItemsString := strings.SplitAfter(strings.TrimSpace(parsedResponse[64]), " ")
 		if len(nItemsString) == 0 {
 			return false, errors.New(fmt.Sprint("Couldn't get number of items in cache: ", ip))
 		}
-		if nItemsString[0] == "0" {
+		if nItemsString[2] == "0" {
 			return true, nil
 		}
 
