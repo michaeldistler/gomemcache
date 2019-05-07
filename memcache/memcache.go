@@ -69,7 +69,7 @@ var (
 
 const (
 	// DefaultTimeout is the default socket read/write timeout.
-	DefaultTimeout = 100 * time.Millisecond
+	DefaultTimeout = 300 * time.Millisecond
 
 	// DefaultMaxIdleConns is the default maximum number of idle connections
 	// kept for any single address.
@@ -380,17 +380,16 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 				return false, err
 			}
 			parsedResponse = strings.Split(string(response), "\n")
-			if len(parsedResponse) < 64 {
+			if len(parsedResponse) < 66 {
 				continue
 			}
 			break
 		}
 		nItemsString := strings.SplitAfter(parsedResponse[64], "STAT total_items ")
-		nItemsInt, err := strconv.Atoi(strings.TrimSpace(nItemsString[1]))
-		if err != nil {
-			return false, err
+		if len(nItemsString) == 0 {
+			return false, errors.New(fmt.Sprint("Couldn't get number of items in cache: ", ip))
 		}
-		if nItemsInt == 0 {
+		if nItemsString[0] == "0" {
 			return true, nil
 		}
 
