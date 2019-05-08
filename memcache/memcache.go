@@ -354,6 +354,10 @@ func (c *Client) withKeyAddr(key string, fn func(net.Addr) error) (err error) {
 	return fn(addr)
 }
 
+func (c *Client) ReturnIPs() []net.Addr {
+	return c.selector.ReturnAddresses()
+}
+
 //IsACacheEmpty returns whether a cache is empty (true) or not (false) based on the number of items stored, 0 == empty.
 func (c *Client) IsACacheEmpty() (bool, error) {
 	var (
