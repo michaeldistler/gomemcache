@@ -385,13 +385,13 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 					return false, err
 				}
 				parsedResponse = strings.Split(string(response), "\n")
-				if len(parsedResponse) < 66 {
+				if len(parsedResponse) != 81 {
 					continue
 				}
 				break
 			}
 			fmt.Println(parsedResponse[63])
-			if !strings.Contains(parsedResponse[63], "curr_items") {
+			if strings.Contains(parsedResponse[63], "hash_power_level") {
 				continue
 			}
 			break
