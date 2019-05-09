@@ -393,6 +393,7 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 		if len(nItemsString) == 0 {
 			return false, errors.New(fmt.Sprint("Couldn't get number of items in cache: ", ip))
 		}
+		fmt.Println(nItemsString)
 		if nItemsString[2] == "0" {
 			return true, nil
 		}
