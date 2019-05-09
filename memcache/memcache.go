@@ -367,24 +367,31 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 	)
 	addr := c.selector.ReturnAddresses()
 	for _, ip := range addr {
-		cn, err = c.getConn(ip)
-		if err != nil {
-			return false, err
-		}
-
-		response := make([]byte, 2048)
 		for {
-			stats := []byte("stats\n")
-			_, err = cn.nc.Write(stats)
+			cn, err = c.getConn(ip)
 			if err != nil {
 				return false, err
 			}
-			_, err = cn.nc.Read(response)
-			if err != nil {
-				return false, err
+
+			response := make([]byte, 2048)
+			for {
+				stats := []byte("stats\n")
+				_, err = cn.nc.Write(stats)
+				if err != nil {
+					return false, err
+				}
+				_, err = cn.nc.Read(response)
+				if err != nil {
+					return false, err
+				}
+				parsedResponse = strings.Split(string(response), "\n")
+				if len(parsedResponse) < 66 {
+					continue
+				}
+				break
 			}
-			parsedResponse = strings.Split(string(response), "\n")
-			if len(parsedResponse) < 66 {
+			fmt.Println(parsedResponse[63])
+			if !strings.Contains(parsedResponse[63], "curr_items") {
 				continue
 			}
 			break
@@ -393,13 +400,8 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 		if len(nItemsString) == 0 {
 			return false, errors.New(fmt.Sprint("Couldn't get number of items in cache: ", ip))
 		}
-		fmt.Println(nItemsString)
 		if nItemsString[2] == "0" {
 			return true, nil
-		}
-		_, err := strconv.Atoi(nItemsString[2])
-		if err != nil {
-			return false, err
 		}
 
 	}
