@@ -354,14 +354,19 @@ func (c *Client) withKeyAddr(key string, fn func(net.Addr) error) (err error) {
 	return fn(addr)
 }
 
+func (c *Client) ReturnIPs() []net.Addr {
+	return c.selector.ReturnAddresses()
+}
+
 //IsACacheEmpty returns whether a cache is empty (true) or not (false) based on the number of items stored, 0 == empty.
 func (c *Client) IsACacheEmpty() (bool, error) {
 	var (
 		parsedResponse []string
 		err            error
 		cn             *conn
+		addr           = c.selector.ReturnAddresses()
 	)
-	addr := c.selector.ReturnAddresses()
+
 	for _, ip := range addr {
 		cn, err = c.getConn(ip)
 		if err != nil {
@@ -380,20 +385,19 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 				return false, err
 			}
 			parsedResponse = strings.Split(string(response), "\n")
-			if len(parsedResponse) < 64 {
+			if len(parsedResponse) != 81 {
 				continue
 			}
 			break
 		}
-		nItemsString := strings.SplitAfter(parsedResponse[64], "STAT total_items ")
-		nItemsInt, err := strconv.Atoi(strings.TrimSpace(nItemsString[1]))
-		if err != nil {
-			return false, err
+		for _, lineResponse := range parsedResponse {
+			if strings.Contains(lineResponse, "curr_items") {
+				nItemsString := strings.SplitAfter(strings.TrimSpace(lineResponse), " ")
+				if nItemsString[2] == "0" {
+					return true, nil
+				}
+			}
 		}
-		if nItemsInt == 0 {
-			return true, nil
-		}
-
 	}
 	return false, nil
 }
