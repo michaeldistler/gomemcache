@@ -364,46 +364,40 @@ func (c *Client) IsACacheEmpty() (bool, error) {
 		parsedResponse []string
 		err            error
 		cn             *conn
+		addr           = c.selector.ReturnAddresses()
 	)
-	addr := c.selector.ReturnAddresses()
+
 	for _, ip := range addr {
+		cn, err = c.getConn(ip)
+		if err != nil {
+			return false, err
+		}
+
+		response := make([]byte, 2048)
 		for {
-			cn, err = c.getConn(ip)
+			stats := []byte("stats\n")
+			_, err = cn.nc.Write(stats)
 			if err != nil {
 				return false, err
 			}
-
-			response := make([]byte, 2048)
-			for {
-				stats := []byte("stats\n")
-				_, err = cn.nc.Write(stats)
-				if err != nil {
-					return false, err
-				}
-				_, err = cn.nc.Read(response)
-				if err != nil {
-					return false, err
-				}
-				parsedResponse = strings.Split(string(response), "\n")
-				if len(parsedResponse) != 81 {
-					continue
-				}
-				break
+			_, err = cn.nc.Read(response)
+			if err != nil {
+				return false, err
 			}
-			fmt.Println(parsedResponse[63])
-			if strings.Contains(parsedResponse[63], "hash_power_level") {
+			parsedResponse = strings.Split(string(response), "\n")
+			if len(parsedResponse) != 81 {
 				continue
 			}
 			break
 		}
-		nItemsString := strings.SplitAfter(strings.TrimSpace(parsedResponse[63]), " ")
-		if len(nItemsString) == 0 {
-			return false, errors.New(fmt.Sprint("Couldn't get number of items in cache: ", ip))
+		for _, lineResponse := range parsedResponse {
+			if strings.Contains(lineResponse, "curr_items") {
+				nItemsString := strings.SplitAfter(strings.TrimSpace(lineResponse), " ")
+				if nItemsString[2] == "0" {
+					return true, nil
+				}
+			}
 		}
-		if nItemsString[2] == "0" {
-			return true, nil
-		}
-
 	}
 	return false, nil
 }
